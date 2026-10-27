@@ -56,7 +56,7 @@ def redirects(u):
   except Exception: return False
 OKIMG=re.compile(r'\.(jpe?g|png)(\?|$)',re.I)
 CTA='Rent to own available, no credit check. Call 888-287-3954 or text 912-325-3578.'
-YEAR_DEFAULT=datetime.date.today().year
+YEAR_DEFAULT=2027  # Laura: current stock is model year 2027
 def year(s):
   m=re.search(r'\b(20(2[4-9]))\b\s*(model|my)?',s,re.I); return int(m.group(1)) if m and m.group(3) else YEAR_DEFAULT
 def desc_of(name,d):
