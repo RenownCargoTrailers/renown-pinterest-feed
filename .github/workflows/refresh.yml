@@ -14,6 +14,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python build.py
+      - run: python build_meta.py || echo "meta feed build failed"
       - run: |
           git config user.name "feed-bot"
           git config user.email "feed-bot@users.noreply.github.com"
