@@ -47,5 +47,53 @@ assert len(rows)>50,'too few rows'
 with open('docs/renown_pinterest_feed.csv','w',newline='',encoding='utf-8') as f:
   w=csv.DictWriter(f,fieldnames=list(rows[0]));w.writeheader();w.writerows(rows)
 json.dump(skip,open('docs/skipped.json','w'),indent=1)
+
+# Microsoft Merchant Center (Bing Shopping) feed. Pinterest CSV above is unchanged.
+# Spec: tab-delimited TXT, UTF-8, header row. Required: id, title, link, price, description, image_link.
+# google_product_category 4044 = Vehicles & Parts > Vehicle Parts & Accessories > Vehicle Storage & Cargo > Motor Vehicle Trailers > Utility & Cargo Trailers
+# (https://www.google.com/basepages/producttype/taxonomy-with-ids.en-US.txt). Trailers have no GTIN.
+BING_COLS = ['id','title','link','price','description','image_link','additional_image_link','availability','condition','brand','identifier_exists','product_type','google_product_category','seller_name']
+OKIMG = re.compile(r'\.(jpe?g|png|gif|bmp|tiff?)(\?|$)', re.I)
+def bing_cell(s):
+  return re.sub(r'[\t\r\n]+', ' ', str(s or '')).strip()
+bing_rows=[]; bing_skip=[]
+for r in rows:
+  imgs = [r['image_link']] + [u for u in (r.get('additional_image_link') or '').split(',') if u]
+  good = [u for u in imgs if OKIMG.search(u)]
+  if not good:
+    bing_skip.append((r['id'], r['title'], r['link'], 'no valid image (Microsoft requires jpg/png/gif/bmp/tiff)'))
+    continue
+  price_val = r['price'].split()[0] if r.get('price') else '0'
+  try:
+    if float(price_val) <= 0:
+      bing_skip.append((r['id'], r['title'], r['link'], 'no price'))
+      continue
+  except ValueError:
+    bing_skip.append((r['id'], r['title'], r['link'], 'invalid price'))
+    continue
+  bing_rows.append({
+    'id': r['id'],
+    'title': r['title'],
+    'link': r['link'],
+    'price': r['price'],
+    'description': r['description'],
+    'image_link': good[0],
+    'additional_image_link': ','.join(good[1:10]),
+    'availability': r['availability'],
+    'condition': r['condition'],
+    'brand': r['brand'],
+    'identifier_exists': 'FALSE',
+    'product_type': r['product_type'],
+    'google_product_category': '4044',
+    'seller_name': 'Renown Cargo Trailers',
+  })
+assert len(bing_rows)>50,'too few bing rows'
+with open('docs/renown_bing_feed.txt','w',encoding='utf-8',newline='') as f:
+  w=csv.DictWriter(f, fieldnames=BING_COLS, delimiter='\t', lineterminator='\n', quoting=csv.QUOTE_NONE, escapechar='\\')
+  w.writeheader()
+  for r in bing_rows:
+    w.writerow({k: bing_cell(r.get(k,'')) for k in BING_COLS})
+json.dump(bing_skip, open('docs/bing_skipped.json','w'), indent=1)
+print('bing', len(bing_rows), 'skipped', len(bing_skip)); [print(s) for s in bing_skip]
 print(len(rows),collections.Counter(r['product_type'] for r in rows),collections.Counter(r['brand'] for r in rows));print(len(skip));[print(s) for s in skip]
 print(sum('\u2014' in r['description']+r['title'] for r in rows))
