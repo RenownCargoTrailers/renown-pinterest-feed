@@ -182,6 +182,14 @@ def axle_from(text):
         return 'Tandem Axle'
     return ''
 
+# Axle types confirmed from product pages but missing from the WooCommerce API description.
+# LS-64752: both https://renowncargotrailers.com/enclosed-trailers/7x14-sdg-legacy-chameleon-pet-grooming-trailer/
+# and https://mobilegroomingtrailers.com/dog-grooming-trailers/7x14-legacy-chameleon-mobile-grooming-trailer-sdg/
+# (STOCK: LS-64752) list "7×14 Tandem Axle Trailer" / "Tandem 5,200 lb. Leaf Spring Axles".
+BING_AXLE_OVERRIDES = {
+    'LS-64752': 'Tandem Axle',
+}
+
 def _is_blackout(text, start, end):
     after = text[end:end+8]
     return bool(re.match(r'\s*out\b', after, re.I))
@@ -552,7 +560,7 @@ def bing_title_parts(row):
     desc = row.get('description') or ''
     blob = f"{title} {desc}"
     size = size_from(blob) or size_from(title)
-    axle = axle_from(blob)
+    axle = axle_from(blob) or BING_AXLE_OVERRIDES.get(row.get('id') or '')
     kind = product_kind(title, desc, row.get('product_type') or '', row.get('link') or '')
     color = color_from(title, desc)
     maker = maker_from(blob, row.get('brand') or '')
@@ -655,6 +663,10 @@ for r in rows:
   good = [u for u in imgs if OKIMG.search(u)]
   if not good:
     bing_skip.append((r['id'], r['title'], r['link'], 'no valid image (Microsoft requires jpg/png/gif/bmp/tiff)'))
+    continue
+  # Bing feed only: drop units marked SOLD in the product name or description.
+  if re.search(r'\bSOLD\b', f"{r.get('title','')} {r.get('description','')}", re.I):
+    bing_skip.append((r['id'], r['title'], r['link'], 'marked SOLD'))
     continue
   price_val = r['price'].split()[0] if r.get('price') else '0'
   try:

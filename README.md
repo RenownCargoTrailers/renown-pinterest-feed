@@ -12,4 +12,4 @@ Built daily by build_meta.py (Commerce Manager > Vehicles catalog > Data feed > 
 ## Microsoft Merchant Center (Bing Shopping) feed
 Feed: https://renowncargotrailers.github.io/renown-pinterest-feed/renown_bing_feed.txt
 Tab-delimited TXT, rebuilt daily by the same build.py workflow. Same in-stock inventory as the Pinterest feed, excluding items without a Microsoft-supported image (jpg/png/gif/bmp/tiff) or a price greater than 0. Uses google_product_category 4044 (Utility & Cargo Trailers) and identifier_exists=FALSE (trailers have no GTIN). Prices are the current website prices.
-Bing titles and the first sentence of each Bing description are rewritten in build.py for search (size, spelled-out axle, type, color, Renown). WooCommerce product names, the website, and the Pinterest/Meta feeds are not changed.
+Bing titles and the first sentence of each Bing description are rewritten in build.py for search (size, spelled-out axle, type, color, Renown). Products whose name or description says SOLD are excluded from the Bing feed only. WooCommerce product names, the website, and the Pinterest/Meta feeds are not changed.
